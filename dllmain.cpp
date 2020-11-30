@@ -11,11 +11,16 @@
 
 const char* LogFile = "D:\\SteamLibrary\\steamapps\\common\\Geometry Dash\\__GDLC.log";
 const char* AppName = "GDLiveCollab";
-int increment = 0;
 
 // stolen directly from our good friend adafacafakaec's gdlivehook (thanks fam!)
 DWORD base = (DWORD)GetModuleHandleA(0);
 HMODULE libcocosbase = GetModuleHandleA("libcocos2d.dll");
+
+// define return type and parameters for our trampoline function
+typedef void (__fastcall *GDFUNC)(void*, void*, void*);
+
+// trampoline function
+GDFUNC fpAddObject = NULL;
 
 struct EditLayer {
     BYTE pad[0x234];
@@ -29,20 +34,15 @@ struct GameManager {
 
 GameManager* gamemanager = (GameManager*)(base + 0x3222D0);
 
-// the name of the function cocos2d calls to add an object
+// the name of the function cocos2d calls to add an object ( libcocos2d.cocos2d::CCArray::addObject )
 const char* addObjectFunctionCall = "?addObject@CCArray@cocos2d@@QAEXPAVCCObject@2@@Z";
 
-// 0x66382490 appears to be the correct function ( libcocos2d.cocos2d::CCArray::addObject )
-
 void __fastcall test(void* _this, void* edx, void* CCObject) {
-    try {
-        _this;
-        MessageBoxA(NULL, "awesome sauce", AppName, MB_OK);
+    if (gamemanager->editLayer && edx == gamemanager->editLayer->objects)
+        MessageBoxA(NULL, "swaggy", AppName, MB_OK);
 
-        // after 20 message boxes it crashes, best guess is _this is not defined then ?
-        
-        // if (gamemanager->editLayer && _this == gamemanager->editLayer->objects)
-    } catch (const std::exception& e) {}
+    // IMPORTANT!!: call trampoline (aka rest of the function we hooked to)
+    return fpAddObject(_this, edx, CCObject);
 }
 
 DWORD WINAPI mainMod(LPVOID lpParam) {
@@ -64,19 +64,24 @@ DWORD WINAPI mainMod(LPVOID lpParam) {
 
     //*/
     
+    // Initialize hooker
     MH_STATUS ini = MH_Initialize();
     if (ini != MH_OK) {
         MessageBoxA(NULL, "Unable to load! (Can't initialize MinHook)", AppName, MB_OK);
         return 0;
     }
 
-    BYTE* targ_func = (BYTE*)GetProcAddress(libcocosbase, addObjectFunctionCall);
+    // function we want to hook
+    LPVOID targ_func = (LPVOID)GetProcAddress(libcocosbase, addObjectFunctionCall);
 
-    MH_STATUS hook = MH_CreateHook(targ_func, (BYTE*)test, NULL);
-    MH_STATUS ena = MH_EnableHook(targ_func);
+    // create and enable hook
+    MH_CreateHook(targ_func, (BYTE*)test, reinterpret_cast<LPVOID*>(&fpAddObject));
+    MH_EnableHook(targ_func);
 
-    // show a message box
-    MessageBoxA(NULL, "Succesfully loaded!", AppName, MB_OK);
+    MessageBoxA(NULL, std::to_string(base + 0x3222D0).c_str() , AppName, MB_OK);
+
+    // show message box
+    MessageBoxA(NULL, ("Succesfully loaded " + (std::string)AppName + "!").c_str(), AppName, MB_OK);
 
     return 1;
 }
@@ -92,8 +97,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
         case DLL_THREAD_DETACH:
             break;
         case DLL_PROCESS_DETACH:
+            // properly handle closing
             MH_Uninitialize();
-            MessageBoxA(NULL, "Removed DLL", AppName, MB_OK);
+            // MessageBoxA(NULL, ("Removed " + (std::string)AppName + "! :)").c_str(), AppName, MB_OK);
             break;
 	}
 	return TRUE;

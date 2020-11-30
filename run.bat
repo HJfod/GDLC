@@ -1,6 +1,6 @@
 @echo off
 
-set INP_NAME=dllmain.cpp hook.cpp
+set INP_NAME=dllmain.cpp
 set DLL_NAME=test.dll
 set COM_PARM=-luser32 -lDbghelp -llibMinHook-x86-v141-mt
 set RUN_ARGS=""
