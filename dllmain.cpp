@@ -1,10 +1,15 @@
 #include <iostream>
+#include <fstream>
 #include <Windows.h>
 #include <winuser.h>
 #include <memoryapi.h>
-#include "hook.h"
+#include <string>
+#include "githook.h"
+#include "methods.hpp"
 
-const char* AppName = "GDLiveBuild";
+const char* LogFile = "D:\\SteamLibrary\\steamapps\\common\\Geometry Dash\\__GDLC.log";
+const char* AppName = "GDLiveCollab";
+int increment = 0;
 
 // stolen directly from our good friend adafacafakaec's gdlivehook (thanks fam!)
 DWORD base = (DWORD)GetModuleHandleA(0);
@@ -15,20 +20,33 @@ const char* addObjectFunctionCall = "?addObject@CCArray@cocos2d@@QAEXPAVCCObject
 
 // 0x66382490 appears to be the correct function ( libcocos2d.cocos2d::CCArray::addObject )
 
-void __cdecl test() {
-    MessageBoxA(NULL, "God damn it works", AppName, MB_OK);
+void __stdcall test(HWND hwnd, LPCSTR str, LPCSTR str2, UINT ui) {
 }
 
+int (__stdcall *OrFunc)(HWND, LPCSTR, LPCSTR, UINT);
+
 DWORD WINAPI mainMod(LPVOID lpParam) {
+    /*
+    
     // awesome function from hook.h by firecubez (dont touch it works by magic)
     add_trampoline(
+
         // magical function that gets the address of the function we want to hook to
         (BYTE*)GetProcAddress(libcocosbase, addObjectFunctionCall),
+
         // our function we want to hook
         (BYTE*)test,
+
         // extra bytes calculated using black magic (check addObject with cheat engine, calc how many bytes of push / epd / whatever instructions until >4, subtract 5)
         0x2
+
     );
+
+    //*/
+
+    // CreateTrampoline(GetProcAddress(libcocosbase, addObjectFunctionCall));
+
+    InstallHook("libcocos2d.dll", addObjectFunctionCall, (void*)test, (void**)&OrFunc);
 
     // show a message box
     MessageBoxA(NULL, "Succesfully loaded!", AppName, MB_OK);

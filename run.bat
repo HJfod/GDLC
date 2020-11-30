@@ -2,7 +2,7 @@
 
 set INP_NAME=dllmain.cpp hook.cpp
 set DLL_NAME=test.dll
-set COM_PARM=-luser32
+set COM_PARM=-luser32 -lDbghelp
 set RUN_ARGS=""
 set TES_MODE=0
 
