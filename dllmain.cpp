@@ -7,14 +7,15 @@
 #include "methods.hpp"
 #include "MinHook.h"
 
+// TODO:
 // make an installer for this that adds MinHook.x86.dll to the GeometryDash folder ok? ok ok
 
 const char* LogFile = "D:\\SteamLibrary\\steamapps\\common\\Geometry Dash\\__GDLC.log";
 const char* AppName = "GDLiveCollab";
 
 // stolen directly from our good friend adafacafakaec's gdlivehook (thanks fam!)
+// gets the offset of GeometryDash.exe
 DWORD base = (DWORD)GetModuleHandleA(0);
-HMODULE libcocosbase = GetModuleHandleA("libcocos2d.dll");
 
 // define return type and parameters for our trampoline function
 typedef void (__fastcall *GDFUNC)(void*, void*, void*);
@@ -22,48 +23,26 @@ typedef void (__fastcall *GDFUNC)(void*, void*, void*);
 // trampoline function
 GDFUNC fpAddObject = NULL;
 
-struct EditLayer {
-    BYTE pad[0x234];
-    void* objects;
-};
+/*
+ * 
+ * some functions:
+ * 
+ * base + 0x85680       > called by gd when an object is placed / edited (dont know what it is though)
+ * base + 0x85750       > called by gd when an object is placed (this is what im looking for!! thanks shira!!)
+ * 
+ */
 
-struct GameManager {
-    BYTE pad[0x168];
-    EditLayer* editLayer;
-};
-
-GameManager* gamemanager = (GameManager*)(base + 0x3222D0);
-
-// the name of the function cocos2d calls to add an object ( libcocos2d.cocos2d::CCArray::addObject )
-const char* addObjectFunctionCall = "?addObject@CCArray@cocos2d@@QAEXPAVCCObject@2@@Z";
+// the function GD calls to add an object (  )
+DWORD addObjectFunctionCall = base + 0x85750;
 
 void __fastcall test(void* _this, void* edx, void* CCObject) {
-    if (gamemanager->editLayer && edx == gamemanager->editLayer->objects)
-        MessageBoxA(NULL, "swaggy", AppName, MB_OK);
+    MessageBoxA(NULL, "swaggy", AppName, MB_OK);
 
     // IMPORTANT!!: call trampoline (aka rest of the function we hooked to)
     return fpAddObject(_this, edx, CCObject);
 }
 
 DWORD WINAPI mainMod(LPVOID lpParam) {
-    /*
-    
-    // awesome function from hook.h by firecubez (dont touch it works by magic)
-    add_trampoline(
-
-        // magical function that gets the address of the function we want to hook to
-        (BYTE*)GetProcAddress(libcocosbase, addObjectFunctionCall),
-
-        // our function we want to hook
-        (BYTE*)test,
-
-        // extra bytes calculated using black magic (check addObject with cheat engine, calc how many bytes of push / epd / whatever instructions until >4, subtract 5)
-        0x2
-
-    );
-
-    //*/
-    
     // Initialize hooker
     MH_STATUS ini = MH_Initialize();
     if (ini != MH_OK) {
@@ -72,13 +51,11 @@ DWORD WINAPI mainMod(LPVOID lpParam) {
     }
 
     // function we want to hook
-    LPVOID targ_func = (LPVOID)GetProcAddress(libcocosbase, addObjectFunctionCall);
+    LPVOID targ_func = (LPVOID)addObjectFunctionCall;
 
     // create and enable hook
     MH_CreateHook(targ_func, (BYTE*)test, reinterpret_cast<LPVOID*>(&fpAddObject));
     MH_EnableHook(targ_func);
-
-    MessageBoxA(NULL, std::to_string(base + 0x3222D0).c_str() , AppName, MB_OK);
 
     // show message box
     MessageBoxA(NULL, ("Succesfully loaded " + (std::string)AppName + "!").c_str(), AppName, MB_OK);
@@ -86,10 +63,11 @@ DWORD WINAPI mainMod(LPVOID lpParam) {
     return 1;
 }
 
-// main dll entry point thing (works with black magic tm)
+// main dll entry point thing
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {
 	switch (ul_reason_for_call) {
         case DLL_PROCESS_ATTACH:
+            // begin hooking when dll attached
 		    CreateThread(0, 0x1000, &mainMod, 0, 0, NULL);
             break;
         case DLL_THREAD_ATTACH:
