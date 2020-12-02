@@ -1,3 +1,5 @@
+# THIS APP IS NOT YET IN AN USE-READY STATE.
+
 # GDLiveCollab
 
 Ever felt like sharing the editor with someone? Well now* you can! (*now being when this app is in a usage-ready state)
