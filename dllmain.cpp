@@ -35,8 +35,8 @@ GDFUNC fpAddObject = NULL;
 // the function GD calls to add an object (  )
 DWORD addObjectFunctionCall = base + 0x85750;
 
-void __fastcall test(void* _this, void* edx, void* CCObject) {
-    MessageBoxA(NULL, "swaggy", AppName, MB_OK);
+void __fastcall AddObjectHook(void* _this, void* edx, void* CCObject) {
+    MessageBoxA(NULL, static_cast<std::string*>(CCObject)->c_str(), AppName, MB_OK);
 
     // IMPORTANT!!: call trampoline (aka rest of the function we hooked to)
     return fpAddObject(_this, edx, CCObject);
@@ -54,7 +54,7 @@ DWORD WINAPI mainMod(LPVOID lpParam) {
     LPVOID targ_func = (LPVOID)addObjectFunctionCall;
 
     // create and enable hook
-    MH_CreateHook(targ_func, (BYTE*)test, reinterpret_cast<LPVOID*>(&fpAddObject));
+    MH_CreateHook(targ_func, (BYTE*)AddObjectHook, reinterpret_cast<LPVOID*>(&fpAddObject));
     MH_EnableHook(targ_func);
 
     // show message box
