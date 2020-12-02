@@ -10,10 +10,10 @@
 #include <vector>
 #include <conio.h>
 
-namespace methods {
-    #define COPY_FROM_DOESNT_EXIST 0x20
-    #define SUCCESS 0x21
+#define METH_COPY_FROM_DOESNT_EXIST 0
+#define METH_SUCCESS 1
 
+namespace methods {
     std::string replace(std::string const& original, std::string const& from, std::string const& to) {
         std::string results;
         std::string::const_iterator end = original.end();
@@ -70,12 +70,12 @@ namespace methods {
 
     int fcopy(std::string from, std::string to) {
         if (!fexists(from))
-            return COPY_FROM_DOESNT_EXIST;
+            return METH_COPY_FROM_DOESNT_EXIST;
         std::ifstream src(from, std::ios::binary);
         std::ofstream dst(to,   std::ios::binary);
         dst << src.rdbuf();
 
-        return SUCCESS;
+        return METH_SUCCESS;
     }
 
     bool ewith (std::string const &fullString, std::string const &ending) {
