@@ -7,6 +7,7 @@
 #include <ctype.h>
 #include <tlhelp32.h>
 #include <Shlwapi.h>
+#include <process.h>
 
 const char* AppName = "GDLiveCollab";
 const char* DataFile = "__GDLC";
@@ -39,26 +40,6 @@ int throwErr(std::string _msg, int _err) {
         MessageBoxA(NULL, _msg.c_str(), AppName, MB_OK);
 
     exit(_err);
-}
-
-bool proc_running(const char* _proc, DWORD* _pid = NULL) {
-    WTS_PROCESS_INFO* pWPIs = NULL;
-    DWORD dwProcCount = 0;
-    bool found = false;
-    if (WTSEnumerateProcesses(WTS_CURRENT_SERVER_HANDLE, NULL, 1, &pWPIs, &dwProcCount))
-        for (DWORD i = 0; i < dwProcCount; i++)
-            if (strcmp((LPSTR)pWPIs[i].pProcessName, _proc) == 0) {
-                found = true;
-                if (_pid != NULL)
-                    *_pid = pWPIs[i].ProcessId;
-            }
-
-    if (pWPIs) {
-        WTSFreeMemory(pWPIs);
-        pWPIs = NULL;
-    }
-
-    return found;
 }
 
 int InjectDLL(const int &pid, const std::string &DLL_Path) {
@@ -95,6 +76,7 @@ int main(int argc, char* argv[]) {
         NoMsgBox = true;
     
     std::cout << "MsgBox: " << NoMsgBox << std::endl;
+    std::cout << "PID: " << _getpid() << std::endl;
 
     std::string GDDataPath = "";
 
@@ -135,7 +117,7 @@ int main(int argc, char* argv[]) {
 
     std::cout << "Checking GD status...";
 
-    if (!proc_running("GeometryDash.exe", &GD_PID))
+    if (!methods::proc_running("GeometryDash.exe", &GD_PID))
         throwErr("GD isn't running! GD needs to be open to load this program.", err::FILE_NOT_FOUND);
 
     std::cout << " Success " << "(PID: " << GD_PID << ")" << std::endl;
@@ -164,6 +146,8 @@ int main(int argc, char* argv[]) {
     ////////////////////////////
 
     MessageBoxA(NULL, "Succesfully loaded! :)", AppName, MB_OK);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(10000));
 
     return PROG_SUCCESS;
 }

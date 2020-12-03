@@ -9,6 +9,8 @@
 #include <thread>
 #include <vector>
 #include <conio.h>
+#include "WtsApi32.h"
+#include <ctype.h>
 
 #define METH_COPY_FROM_DOESNT_EXIST 0
 #define METH_SUCCESS 1
@@ -136,5 +138,25 @@ namespace methods {
         char* cstr = new char[sz];
         int err = strcpy_s(cstr, sz, _str.c_str());
         return cstr;
+    }
+
+    bool proc_running(const char* _proc, DWORD* _pid = NULL) {
+        WTS_PROCESS_INFO* pWPIs = NULL;
+        DWORD dwProcCount = 0;
+        bool found = false;
+        if (WTSEnumerateProcesses(WTS_CURRENT_SERVER_HANDLE, NULL, 1, &pWPIs, &dwProcCount))
+            for (DWORD i = 0; i < dwProcCount; i++)
+                if (strcmp((LPSTR)pWPIs[i].pProcessName, _proc) == 0) {
+                    found = true;
+                    if (_pid != NULL)
+                        *_pid = pWPIs[i].ProcessId;
+                }
+
+        if (pWPIs) {
+            WTSFreeMemory(pWPIs);
+            pWPIs = NULL;
+        }
+
+        return found;
     }
 }

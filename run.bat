@@ -3,7 +3,7 @@
 set INP_NAME=dllmain.cpp
 set DLL_NAME=GDLiveCollab.dll
 set EXE_NAME=GDLiveCollab.exe
-set COM_PARM=-luser32 -lDbghelp -llibMinHook-x86-v141-mt
+set COM_PARM=-luser32 -lDbghelp -llibMinHook-x86-v141-mt -lWtsApi32 -m32
 set RUN_ARGS=""
 set DLL_COMP=1
 set RUN_TRUE=1
@@ -18,7 +18,7 @@ FOR %%A IN (%*) DO (
 
 if %DLL_COMP%==1 (
     echo Compiling DLL...
-    clang++ -std=c++17 -m32 -shared %COM_PARM% -o %DLL_NAME% %INP_NAME%
+    clang++ -std=c++17 -shared %COM_PARM% -o %DLL_NAME% %INP_NAME%
     if %errorlevel% == 0 (echo Compiled DLL!) else (goto error)
 )
 echo Compiling Runner...
