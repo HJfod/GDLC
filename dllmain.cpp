@@ -108,21 +108,31 @@ __declspec(naked) void loadPointer() {
 }
 
 void InsertObject(std::string _obj) {
+    print(_obj);
+
     _obj += "\0";
 
 	DWORD oldProtect, newProtect;
+
+    print("debug0");
     
     VirtualProtect((LPVOID)(libcocosbase + 0xC16A3), 8, PAGE_EXECUTE_READWRITE, &oldProtect);
     *((__int64*)(libcocosbase + 0xC16A3)) = 0x0E74000000026DE9;
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(20));
 
+    print("debug1");
+
     pasteFunction(_obj);
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(20));
 
+    print("debug2");
+
     *((__int64*)(libcocosbase + 0xC16A3)) = 0x0E74000000958638;
     VirtualProtect((LPVOID)(libcocosbase + 0xC16A3), 8, oldProtect, &newProtect);
+
+    print("debug3");
 }
 
 void __fastcall AddObjectHook(void* _this, void* _edx, void* _CCObject) {
@@ -144,19 +154,11 @@ DWORD WINAPI mainMod(LPVOID lpParam) {
     }
 
     // redirect console output
-    if (FreeConsole() == 0) {
+    if (AllocConsole() == 0) {
         MessageBoxA(NULL, "Unable to redirect console output!", AppName, MB_ICONERROR);
         return 0;
     }
-    DWORD pid = NULL;
-    methods::proc_running("GDLiveCollab.exe", &pid);
-    MessageBoxA(NULL, std::to_string(pid).c_str(), AppName, MB_OK);
-    if (pid != NULL)
-        AttachConsole(pid);
-    else {
-        MessageBoxA(NULL, "Unable to redirect console output!", AppName, MB_ICONERROR);
-        return 0;
-    }
+    freopen_s(reinterpret_cast<FILE**>(stdout), "CONOUT$", "w", stdout);
 
     // Initialize stuff stolen from GDLiveCollab
     loadPointer();

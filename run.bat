@@ -22,7 +22,7 @@ if %DLL_COMP%==1 (
     if %errorlevel% == 0 (echo Compiled DLL!) else (goto error)
 )
 echo Compiling Runner...
-clang++ runner.cpp -o %EXE_NAME% -std=c++17 -m32 -luser32 -lWtsApi32
+clang++ runner.cpp -o %EXE_NAME% -std=c++17 -m32 -luser32 -lWtsApi32 -D NOMSGBOX
 if %errorlevel%==0 (
     echo Compiled Runner!
     if %PUB_LISH%==1 (

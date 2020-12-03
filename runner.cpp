@@ -11,8 +11,9 @@
 
 const char* AppName = "GDLiveCollab";
 const char* DataFile = "__GDLC";
-bool NoMsgBox = false;
 DWORD GD_PID = 0;
+
+// #define NOMSGBOX
 
 #define INJECT_SUCCESS 0x3F
 #define INJECT_TARGET_OPEN_FAIL 0x30
@@ -25,7 +26,8 @@ enum err {
     PROG_SUCCESS = 0,
     FILE_NOT_FOUND,
     GD_PATH_NOT_VALID,
-    INJECT_ERROR
+    INJECT_ERROR,
+    CANT_OPEN_GD
 };
 
 const char* req_files[2] = {
@@ -36,8 +38,9 @@ const char* req_files[2] = {
 int throwErr(std::string _msg, int _err) {
     std::cout << " Failed" << std::endl;
 
-    if (!NoMsgBox)
+    #ifndef NOMSGBOX
         MessageBoxA(NULL, _msg.c_str(), AppName, MB_OK);
+    #endif
 
     exit(_err);
 }
@@ -72,10 +75,14 @@ int InjectDLL(const int &pid, const std::string &DLL_Path) {
 }
 
 int main(int argc, char* argv[]) {
-    if (argc > 1 && strcmp(argv[1], "mb") == 0)
-        NoMsgBox = true;
     
-    std::cout << "MsgBox: " << NoMsgBox << std::endl;
+    std::cout << "MsgBox: " <<
+    #ifdef NOMSGBOX
+        0
+    #else
+        1
+    #endif
+    << std::endl;
     std::cout << "PID: " << _getpid() << std::endl;
 
     std::string GDDataPath = "";
@@ -118,9 +125,9 @@ int main(int argc, char* argv[]) {
     std::cout << "Checking GD status...";
 
     if (!methods::proc_running("GeometryDash.exe", &GD_PID))
-        throwErr("GD isn't running! GD needs to be open to load this program.", err::FILE_NOT_FOUND);
+        throwErr("GD isn't running!", err::FILE_NOT_FOUND);
 
-    std::cout << " Success " << "(PID: " << GD_PID << ")" << std::endl;
+    std::cout << " Success" << std::endl;
     
     ////////////////////////////
 
@@ -144,10 +151,10 @@ int main(int argc, char* argv[]) {
     std::cout << " Success" << std::endl;
     
     ////////////////////////////
-
-    MessageBoxA(NULL, "Succesfully loaded! :)", AppName, MB_OK);
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+    
+    #ifndef NOMSGBOX
+        MessageBoxA(NULL, "Succesfully loaded! :)", AppName, MB_OK);
+    #endif
 
     return PROG_SUCCESS;
 }
