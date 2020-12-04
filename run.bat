@@ -19,7 +19,7 @@ FOR %%A IN (%*) DO (
 if %DLL_COMP%==1 (
     echo Compiling DLL...
     clang++ -std=c++17 -shared %COM_PARM% -o %DLL_NAME% %INP_NAME%
-    if %errorlevel% == 0 (echo Compiled DLL!) else (goto error)
+    if %errorlevel%==0 (echo Compiled DLL!) else (goto error)
 )
 echo Compiling Runner...
 clang++ runner.cpp -o %EXE_NAME% -std=c++17 -m32 -luser32 -lWtsApi32 -D NOMSGBOX

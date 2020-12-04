@@ -11,6 +11,7 @@
 #include <conio.h>
 #include "WtsApi32.h"
 #include <ctype.h>
+#include <regex>
 
 #define METH_COPY_FROM_DOESNT_EXIST 0
 #define METH_SUCCESS 1
@@ -158,5 +159,9 @@ namespace methods {
         }
 
         return found;
+    }
+
+    std::string unspace(std::string _str) {
+        return std::regex_replace(_str, std::regex("^ +| +$|( ) +"), "$1");
     }
 }
